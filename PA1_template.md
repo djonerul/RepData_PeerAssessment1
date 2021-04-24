@@ -1,27 +1,32 @@
 ---
 title: "Reproducible Research: Peer Assessment 1"
-output: 
+output:
   html_document:
     keep_md: true
 ---
 
+This Report makes use of data from a personal activity monitoring device. The device collects data at 5 minute intervals through out the day. The data consists of two months of data from an anonymous individual collected during the months of October and November, 2012 and include the number of steps taken in 5 minute intervals each day.
 
-## Here's the code for reading in the dataset and/or processing the data
 
+***
+
+
+### Here's the code for reading in the dataset and/or processing the data
 
 ```r
 library(tidyverse)
 ```
 
 
-
 ```r
 d <- read.csv("activity.csv",na.strings = NA) %>% mutate(date = as.Date(date)) %>% na.omit()
 ```
 
-## Here's how the number of steps are distributed per day:
 
-Code
+***
+
+
+### Here's how the number of steps are distributed per day
 
 ```r
 d$Day <- as.factor(weekdays(d$date))
@@ -33,8 +38,11 @@ ggplot(d, aes(x=steps)) +
 
 ![](PA1_template_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
 
-## Here's the mean and median number of steps taken each day
 
+***
+
+
+### Here's the mean and median number of steps taken each day
 
 ```r
 aggregate(steps ~ Day,d,mean)
@@ -67,8 +75,9 @@ aggregate(steps ~ Day,d,median)
 ```
 
 
-## Here's the average number of steps taken over time
-Code
+***
+
+### Here's the average number of steps taken over time
 
 ```r
 c <- aggregate(steps ~ date,d,mean)
@@ -79,8 +88,9 @@ ggplot(c,aes(x=date,y=steps)) +
 ![](PA1_template_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
 
 
-## Here's the interval in which the highest number of steps were taken
+***
 
+### Here's the interval in which the highest number of steps were taken
 
 ```r
 e <- aggregate(steps ~ interval,d,mean)
@@ -94,8 +104,13 @@ e[1,]
 ```
 
 
+***
 
-## Here's how the data was imputed in order for there to be values replacing the NAs
+
+### Here's how the data was imputed in order for there to be values replacing the NAs
+
+
+> First i need the plyr package to be able to use ddply()
 
 
 ```r
@@ -104,20 +119,35 @@ library(tidyverse)
 ```
 
 
+> So we gather the data, this time do not omit NAs
+
 
 ```r
 d <- read.csv("activity.csv") %>% mutate(date = as.Date(date))
+```
 
+
+> Then we create a function to replace the NA with the mean, here "x" is the variable we want to operate on.
+
+
+```r
 grpmean <- function(x) replace(x,is.na(x),mean(x,na.rm = T))
+```
 
+
+> Then we use ddply to apply the function we created above to steps, using interval as the grouping
+
+
+```r
 d2 <- ddply(d,~interval,transform,steps=grpmean(steps))
-
 d2 <- d2[order(d2$date),]
 ```
 
-## Using the imputed dat, here's the distribution of the number of steps done per day.
 
-Code
+***
+
+
+### Using the imputed data, here's the distribution of the number of steps done per day.
 
 ```r
 d2$Day <- as.factor(weekdays(d2$date))
@@ -127,12 +157,13 @@ ggplot(d2, aes(x=steps)) +
         facet_grid(rows = vars(Day))
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+![](PA1_template_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
 
 
-## Here's the comparison on the activities done during the weekend versus the weekdays
+***
 
-Code
+
+### Here's the comparison on the activities done during the weekend versus the weekdays
 
 ```r
 d2$WkEnd <- grepl("S.+",weekdays(d2$date))
@@ -143,5 +174,11 @@ ggplot(c2,aes(x=interval,y=steps,group=WkEnd)) +
         facet_grid(cols = vars(WkEnd))
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
+![](PA1_template_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
 
+
+
+
+These type of devices are part of the “quantified self” movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. But these data remain under-utilized both because the raw data are hard to obtain and there is a lack of statistical methods and software for processing and interpreting the data. The aim of this report is to generate awareness of the benefits of these devices.
+
+:p
