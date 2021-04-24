@@ -6,20 +6,113 @@ output:
 ---
 
 
-## Loading and preprocessing the data
+## Here's the code for reading in the dataset and/or processing the data
+
+```{r,message=FALSE}
+
+library(tidyverse)
+
+```
+
+
+```{r, results='asis',message=FALSE}
+
+d <- read.csv("activity.csv",na.strings = NA) %>% mutate(date = as.Date(date)) %>% na.omit()
+
+```
+
+## Here's how the number of steps are distributed per day:
+
+Code
+```{r,message=FALSE}
+
+d$Day <- as.factor(weekdays(d$date))
+d <- subset(d,steps > 0)
+ggplot(d, aes(x=steps)) +
+        geom_histogram() +
+        facet_grid(rows = vars(Day))
+
+```
+
+## Here's the mean and median number of steps taken each day
+
+```{r}
+aggregate(steps ~ Day,d,mean)
+
+aggregate(steps ~ Day,d,median)
+
+```
+
+
+## Here's the average number of steps taken over time
+Code
+```{r}
+
+c <- aggregate(steps ~ date,d,mean)
+ggplot(c,aes(x=date,y=steps)) +
+        geom_line() + geom_point()
+
+```
+
+
+## Here's the interval in which the highest number of steps were taken
+
+```{r}
+e <- aggregate(steps ~ interval,d,mean)
+e <- e[order(e$steps, decreasing = T),]
+e[1,]
+
+```
 
 
 
-## What is mean total number of steps taken per day?
+## Here's how the data was imputed in order for there to be values replacing the NAs
+
+```{r,message=FALSE}
+
+library(plyr)
+library(tidyverse)
+
+```
 
 
+```{r}
 
-## What is the average daily activity pattern?
+d <- read.csv("activity.csv") %>% mutate(date = as.Date(date))
+
+grpmean <- function(x) replace(x,is.na(x),mean(x,na.rm = T))
+
+d2 <- ddply(d,~interval,transform,steps=grpmean(steps))
+
+d2 <- d2[order(d2$date),]
+
+```
+
+## Using the imputed dat, here's the distribution of the number of steps done per day.
+
+Code
+```{r,message=FALSE}
+
+d2$Day <- as.factor(weekdays(d2$date))
+d2 <- subset(d2,steps > 0)
+ggplot(d2, aes(x=steps)) +
+        geom_histogram() +
+        facet_grid(rows = vars(Day))
+
+```
 
 
+## Here's the comparison on the activities done during the weekend versus the weekdays
 
-## Imputing missing values
+Code
+```{r}
 
+d2$WkEnd <- grepl("S.+",weekdays(d2$date))
+c2 <- aggregate(steps~interval+WkEnd,d2,mean)
+c2$WkEnd <- factor(c2$WkEnd,levels = c(FALSE,TRUE),labels = c("Weekends","Weekdays"))
+ggplot(c2,aes(x=interval,y=steps,group=WkEnd)) +
+        geom_line() +
+        facet_grid(cols = vars(WkEnd))
 
+```
 
-## Are there differences in activity patterns between weekdays and weekends?
